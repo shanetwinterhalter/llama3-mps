@@ -15,6 +15,13 @@ from fairscale.nn.model_parallel.layers import (
 )
 from torch import nn
 
+if torch.backends.mps.is_available():
+    device = torch.device('mps')
+elif torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
+
 
 @dataclass
 class ModelArgs:
@@ -133,7 +140,7 @@ class Attention(nn.Module):
                 self.n_local_kv_heads,
                 self.head_dim,
             )
-        ).cuda()
+        )
         self.cache_v = torch.zeros(
             (
                 args.max_batch_size,
@@ -141,7 +148,7 @@ class Attention(nn.Module):
                 self.n_local_kv_heads,
                 self.head_dim,
             )
-        ).cuda()
+        )
 
     def forward(
         self,
@@ -283,7 +290,7 @@ class Transformer(nn.Module):
 
         mask = None
         if seqlen > 1:
-            mask = torch.full((seqlen, seqlen), float("-inf"), device=tokens.device)
+            mask = torch.full((seqlen, seqlen), float("-inf"), device=torch.device('cpu'))
 
             mask = torch.triu(mask, diagonal=1)
 
@@ -292,7 +299,7 @@ class Transformer(nn.Module):
             # (seqlen, cache_len + seqlen), and the only masked entries are (i, j) for
             # j > cache_len + i, since row i corresponds to token cache_len + i.
             mask = torch.hstack(
-                [torch.zeros((seqlen, start_pos), device=tokens.device), mask]
+                [torch.zeros((seqlen, start_pos), device=torch.device('cpu')), mask]
             ).type_as(h)
 
         for layer in self.layers:
