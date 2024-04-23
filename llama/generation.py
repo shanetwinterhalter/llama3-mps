@@ -186,7 +186,7 @@ class Llama:
                 ignore_index=pad_id,
             )
 
-        stop_tokens = torch.tensor(list(self.tokenizer.stop_tokens))
+        stop_tokens = torch.tensor(list(self.tokenizer.stop_tokens), device=device)
 
         for cur_pos in range(min_prompt_len, total_len):
             logits = self.model.forward(tokens[:, prev_pos:cur_pos], prev_pos)
